@@ -454,12 +454,20 @@
         function drawBoss() {
             if (!boss) return;
             
+            ctx.save();
+            if (boss.isFlashing && Math.floor(boss.flashTimer / 3) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+                ctx.filter = 'brightness(2)';
+            }
+            
             if (boss.image && boss.image.complete) {
                 ctx.drawImage(boss.image, boss.x, boss.y, boss.width, boss.height);
             } else {
                 ctx.fillStyle = '#8b0000';
                 ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
             }
+            
+            ctx.restore();
             
             const hpBarWidth = 300;
             const hpBarHeight = 12;

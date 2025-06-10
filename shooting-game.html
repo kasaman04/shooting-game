@@ -565,6 +565,14 @@
                         ctx.arc(0, 0, 10, 0, Math.PI * 2);
                         ctx.stroke();
                         break;
+                    case 'heart':
+                        ctx.fillStyle = '#FF1493';
+                        ctx.beginPath();
+                        ctx.moveTo(0, -2);
+                        ctx.bezierCurveTo(-6, -8, -16, -2, 0, 6);
+                        ctx.bezierCurveTo(16, -2, 6, -8, 0, -2);
+                        ctx.fill();
+                        break;
                 }
                 ctx.restore();
             });
@@ -588,6 +596,8 @@
                         
                         bullets.splice(i, 1);
                         boss.hp--;
+                        boss.isFlashing = true;
+                        boss.flashTimer = 15;
                         score += 50;
                         updateUI();
                         
@@ -657,6 +667,10 @@
                             }
                             score += absorbedBullets * 100;
                             break;
+                        case 'heart':
+                            lives = Math.min(5, lives + 1);
+                            score += 500;
+                            break;
                     }
                     updateUI();
                     break;
@@ -673,6 +687,8 @@
                         
                         homingLasers.splice(i, 1);
                         boss.hp--;
+                        boss.isFlashing = true;
+                        boss.flashTimer = 15;
                         score += 100;
                         updateUI();
                         

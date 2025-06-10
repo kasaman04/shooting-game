@@ -90,6 +90,8 @@
         let skillGauge = 0;
         let coins = 0;
         let playerImage = null;
+        let sparkleEffects = [];
+        let lifeUIFlash = 0;
 
         const player = {
             x: canvas.width / 2 - 50,
@@ -122,6 +124,8 @@
             bossBullets = [];
             items = [];
             homingLasers = [];
+            sparkleEffects = [];
+            lifeUIFlash = 0;
             boss = null;
             currentBossIndex = 0;
             bossDefeated = false;
@@ -137,9 +141,71 @@
 
         function updateUI() {
             scoreElement.textContent = score;
+            
+            // ライフUIの光るエフェクト
+            if (lifeUIFlash > 0) {
+                lifeUIFlash--;
+                livesElement.style.color = lifeUIFlash % 6 < 3 ? '#00FF00' : '#FFFFFF';
+                livesElement.style.textShadow = lifeUIFlash % 6 < 3 ? '0 0 10px #00FF00' : 'none';
+            } else {
+                livesElement.style.color = '#FFFFFF';
+                livesElement.style.textShadow = 'none';
+            }
+            
             livesElement.textContent = lives;
             document.getElementById('skillGauge').textContent = skillGauge;
             document.getElementById('coins').textContent = coins;
+        }
+        
+        function createSparkleEffect(x, y) {
+            for (let i = 0; i < 8; i++) {
+                sparkleEffects.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    life: 30,
+                    maxLife: 30,
+                    size: Math.random() * 3 + 1
+                });
+            }
+        }
+        
+        function updateSparkleEffects() {
+            for (let i = sparkleEffects.length - 1; i >= 0; i--) {
+                const effect = sparkleEffects[i];
+                effect.x += effect.vx;
+                effect.y += effect.vy;
+                effect.life--;
+                
+                if (effect.life <= 0) {
+                    sparkleEffects.splice(i, 1);
+                }
+            }
+        }
+        
+        function drawSparkleEffects() {
+            sparkleEffects.forEach(effect => {
+                const alpha = effect.life / effect.maxLife;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = '#FFFF00';
+                ctx.beginPath();
+                ctx.arc(effect.x, effect.y, effect.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 星型エフェクト
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(effect.x - effect.size, effect.y);
+                ctx.lineTo(effect.x + effect.size, effect.y);
+                ctx.moveTo(effect.x, effect.y - effect.size);
+                ctx.lineTo(effect.x, effect.y + effect.size);
+                ctx.stroke();
+                
+                ctx.restore();
+            });
         }
 
         function loadPlayerImage() {
@@ -566,12 +632,26 @@
                         ctx.stroke();
                         break;
                     case 'heart':
-                        ctx.fillStyle = '#FF1493';
-                        ctx.beginPath();
-                        ctx.moveTo(0, -2);
-                        ctx.bezierCurveTo(-6, -8, -16, -2, 0, 6);
-                        ctx.bezierCurveTo(16, -2, 6, -8, 0, -2);
-                        ctx.fill();
+                        // ドット絵スタイルのハートユニット
+                        ctx.fillStyle = '#8B0000'; // 影・縁取り
+                        ctx.fillRect(-7, -6, 14, 12);
+                        ctx.fillRect(-8, -3, 16, 8);
+                        
+                        ctx.fillStyle = '#FF4C4C'; // ハート本体
+                        ctx.fillRect(-6, -5, 12, 10);
+                        ctx.fillRect(-7, -2, 14, 6);
+                        
+                        // ハートの形状調整
+                        ctx.fillRect(-5, -6, 3, 2);
+                        ctx.fillRect(2, -6, 3, 2);
+                        ctx.fillRect(-4, -7, 8, 2);
+                        ctx.fillRect(-2, 6, 4, 2);
+                        
+                        // ハイライト
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(-4, -5, 2, 2);
+                        ctx.fillStyle = '#FFB6C1';
+                        ctx.fillRect(-3, -4, 3, 2);
                         break;
                 }
                 ctx.restore();
@@ -668,7 +748,11 @@
                             score += absorbedBullets * 100;
                             break;
                         case 'heart':
-                            lives = Math.min(5, lives + 1);
+                            if (lives < 5) {
+                                lives++;
+                                lifeUIFlash = 30;
+                                createSparkleEffect(item.x + item.width/2, item.y + item.height/2);
+                            }
                             score += 500;
                             break;
                     }
@@ -751,6 +835,7 @@
             updateBossBullets();
             updateItems();
             updateHomingLasers();
+            updateSparkleEffects();
             checkCollisions();
 
             drawPlayer();
@@ -759,6 +844,7 @@
             drawBossBullets();
             drawItems();
             drawHomingLasers();
+            drawSparkleEffects();
 
             if (bossDefeated && !boss) {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
